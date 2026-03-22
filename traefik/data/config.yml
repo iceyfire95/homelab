@@ -1,0 +1,208 @@
+http:
+  routers:
+
+    proxmox:
+      entryPoints:
+        - "https"
+      rule: "Host(`proxmox.local.domain.com`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+      tls: {}
+      service: proxmox
+
+    haos:
+      entryPoints:
+        - "https"
+      rule: "Host(`haos.local.domain.com`) || Host(`haos.domain.com`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+      tls: {}
+      service: haos
+
+    truenas:
+      entryPoints:
+        - "https"
+      rule: "Host(`truenas.local.domain.com`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+      tls: {}
+      service: truenas
+
+    jellyfin:
+      entryPoints:
+        - "https"
+      rule: "Host(`jellyfin.local.domain.com`) || Host(`jellyfin.domain.com`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+      tls: {}
+      service: jellyfin
+
+    jellyseerr:
+      entryPoints:
+        - "https"
+      rule: "Host(`jellyseerr.local.domain.com`) || Host(`jellyseerr.domain.com`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+      tls: {}
+      service: jellyseerr
+
+    sonarr:
+      entryPoints:
+        - "https"
+      rule: "Host(`sonarr.local.domain.com`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+      tls: {}
+      service: sonarr
+
+    radarr:
+      entryPoints:
+        - "https"
+      rule: "Host(`radarr.local.domain.com`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+      tls: {}
+      service: radarr
+
+    prowlarr:
+      entryPoints:
+        - "https"
+      rule: "Host(`prowlarr.local.domain.com`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+      tls: {}
+      service: prowlarr
+
+    qbit:
+      entryPoints:
+        - "https"
+      rule: "Host(`qbit.local.domain.com`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+      tls: {}
+      service: qbit
+
+    pihole:
+      entryPoints:
+        - "https"
+      rule: "Host(`pihole.local.domain.com`)"
+      middlewares:
+        - default-headers
+#        - addprefix-pihole 
+        - https-redirectscheme
+      tls: {}
+      service: pihole
+
+  services:
+
+    proxmox:
+      loadBalancer:
+        servers:
+          - url: ""
+        passHostHeader: true
+
+    haos:
+      loadBalancer:
+        servers:
+          - url: ""
+        passHostHeader: true
+
+    truenas:
+      loadBalancer:
+        servers:
+          - url: ""
+        passHostHeader: true
+
+    jellyfin:
+      loadBalancer:
+        servers:
+          - url: ""
+        passHostHeader: true
+
+    jellyseerr:
+      loadBalancer:
+        servers:
+          - url: ""
+        passHostHeader: true
+
+    sonarr:
+      loadBalancer:
+        servers:
+          - url: ""
+        passHostHeader: true
+
+    radarr:
+      loadBalancer:
+        servers:
+          - url: ""
+        passHostHeader: true
+
+    prowlarr:
+      loadBalancer:
+        servers:
+          - url: ""
+        passHostHeader: true
+
+    qbit:
+      loadBalancer:
+        servers:
+          - url: ""
+        passHostHeader: true
+
+    pihole:
+      loadBalancer:
+        servers:
+          - url: ""
+        passHostHeader: true
+
+
+  middlewares:
+
+    https-redirectscheme:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    default-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSub.domain.coms: true
+        stsPreload: true
+        stsSeconds: 15552000
+        customFrameOptionsValue: SAMEORIGIN
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+
+    redirectregex-pihole:
+      redirectRegex:
+        regex: "/admin/(.*)"
+        replacement: /
+
+    addprefix-pihole:
+      addPrefix:
+        prefix: "/admin"
+
+    default-whitelist:
+      ipAllowList:
+        sourceRange:
+        - "10.0.0.0/8"
+        - "192.168.0.0/16"
+        - "172.16.0.0/12"
+
+    secured:
+      chain:
+        middlewares:
+        - default-whitelist
+        - default-headers

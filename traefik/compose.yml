@@ -1,0 +1,49 @@
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    environment:
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+      - TRAEFIK_DOMAIN=${TRAEFIK_DOMAIN}
+      - BASE_DOMAIN=${BASE_DOMAIN}
+      - LOCAL_DOMAIN=${LOCAL_DOMAIN}
+      - BASIC_AUTH_USERS=${BASIC_AUTH_USERS}
+      # If you choose to use an API Key instead of a Token, specify your email as well
+      # - CF_API_EMAIL=user@example.com
+      # - CF_API_KEY=YOUR_API_KEY
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/traefik.yml:/traefik.yml:ro
+      - ./data/acme.json:/acme.json
+      - ./data/config.yml:/config.yml:ro
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DOMAIN}`)"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=${BASIC_AUTH_USERS}"
+      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`${TRAEFIK_DOMAIN}`)"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].main=${LOCAL_DOMAIN}"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.${LOCAL_DOMAIN}"
+      - "traefik.http.routers.traefik-secure.tls.domains[1].main=${BASE_DOMAIN}"
+      - "traefik.http.routers.traefik-secure.tls.domains[1].sans=*.${BASE_DOMAIN}"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  proxy:
+    external: true

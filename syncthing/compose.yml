@@ -1,0 +1,35 @@
+services:
+  syncthing:
+    image: syncthing/syncthing
+    container_name: syncthing
+    hostname: ${SYNCTHING_HOSTNAME}
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./data:/var/syncthing
+      - ${NAS_BASE}/event-media:/var/event-media
+      - ${NAS_BASE}/syncthing:/var/nas
+    ports:
+      - 22000:22000/tcp
+      - 22000:22000/udp
+      - 21027:21027/udp
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.syncthing.rule=Host(`sync.${LOCAL_DOMAIN}`)"
+      - "traefik.http.routers.syncthing.entrypoints=https"
+      - "traefik.http.routers.syncthing.tls=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.services.syncthing.loadbalancer.server.port=8384"
+    healthcheck:
+      test: curl -fkLsS -m 2 127.0.0.1:8384/rest/noauth/health | grep -o --color=never OK || exit 1
+      interval: 1m
+      timeout: 10s
+      retries: 3
+
+networks:
+  proxy:
+    external: true

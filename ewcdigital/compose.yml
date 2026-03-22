@@ -1,0 +1,21 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: ewcsite
+    restart: unless-stopped
+    volumes:
+      - ./ewcdigital/public:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ewcsite.rule=Host(`ewcsite.${LOCAL_DOMAIN}`) || Host(`${BASE_DOMAIN}`)"
+      - "traefik.http.routers.ewcsite.entrypoints=https"
+      - "traefik.http.routers.ewcsite.tls=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.services.ewcsite.loadbalancer.server.port=80"
+
+networks:
+  proxy:
+    external: true
